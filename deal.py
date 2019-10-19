@@ -1,6 +1,6 @@
 import requests
 import json
-import http
+
 class node:
     flower=0 #1234
     num=0  # 234567891011121314, A14
@@ -14,10 +14,11 @@ temp_1,temp_2,temp_3=[],[],[]   #存放完整排列答案
 end_1,end_2,end_3=[],[],[]   #最终答案
 s1,s2,s3=[],[],[]   #标记
 tempp1,tempp2,tempp3=[],[],[]
+pddun=[]
+hua,number={},{}
 submit_ans=[]
-
-for i in range(0,20):
-    poker_1.append(node(0,0))
+for i in range(0, 20):
+    poker_1.append(node(0, 0))
     poker_2.append(node(0, 0))
     poker_3.append(node(0, 0))
     ans_1.append(node(0, 0))
@@ -26,31 +27,32 @@ for i in range(0,20):
     temp_1.append(node(0, 0))
     temp_2.append(node(0, 0))
     temp_3.append(node(0, 0))
-    end_1.append(node(0,0))
+    end_1.append(node(0, 0))
     end_2.append(node(0, 0))
     end_3.append(node(0, 0))
     s1.append(0)
     s2.append(0)
     s3.append(0)
+    submit_ans.append("")
+    pddun.append(node(0,0))
 
-for i in range(0,2+1):
-    tempp1.append(node(0,0))
-for i in range(0,4+1):
-    tempp2.append(node(0,0))
-for i in range(0,4+1):
-    tempp3.append(node(0,0))
+for i in range(0, 2 + 1):
+    tempp1.append(node(0, 0))
+    submit_ans.append("")
+for i in range(0, 4 + 1):
+    tempp2.append(node(0, 0))
+for i in range(0, 4 + 1):
+    tempp3.append(node(0, 0))
 
-global cnt,r1,r2,r3,end_ans,score # 计数器
-cnt,r1,r2,r3=0,5,5,3
-end_ans ,score= 0.0,0.0
-global e1, e2, e3
-global a1, a2, a3
+for i in range(0, 15 + 1):
+    hua[i] = 0
+    number[i] = 0  # 桶排初始化
+
+global end_ans ,score
+end_ans,score=0.0,0.0
 global token,id,use
 
-hua,number={},{}
-for i in range(0,15+1):
-    hua[i]=0
-    number[i]=0#桶排初始化
+
 
 def init_cnt():
     for i in range(0, 15+1):
@@ -335,35 +337,20 @@ def third():
     return  k
 
 
-def tempof() :
-    for i in range(1,4): #前墩
-        ans_3[i] = temp_3[i]
-    for i in range(1,6): #中墩
-        ans_2[i] = temp_2[i]
-    for i in range(1,6): #后墩
-        ans_1[i] = temp_1[i]
+
 
 def contrast_ans() :
-
-
-    global score,end_ans,cnt
-    global e1, e2, e3
-    global a1, a2, a3
+    global score,end_ans
     tempof()
     score = 0.0
     k1 = first()
-    e1 = score
     k2 = second()
-    e2 = score - e1
     k3 = third()
-    e3 = score - (e1 + e2)
     if k1 > k2 or k2 > k3 or k1 > k3 :
         score = 0
     if score>end_ans :
         end_ans = score
-        a1 = e1; a2 = e2; a3 = e3
         standof()
-    cnt+=1
 
 
 def init_2():
@@ -377,7 +364,7 @@ def dfs_2(d,index_2) :#/*枚举组合*/
     for i in range(d,9):
         temp_2[index_2] = poker_2[i]
         s2[i] = 1
-        if index_2 == r2 :
+        if index_2 == 5 :
             init_2()
             contrast_ans()
         else :
@@ -391,13 +378,103 @@ def init_1() :
             index+=1
             poker_2[index] = poker_1[i]
 
+def pddi():
+
+    init_cnt()
+    for i in range(0, 4 + 1):
+        tempp2[i] = temp_1[i + 1]
+
+    tempp2.sort(key=takenum)  # 中墩牌组有序化
+    for i in range(1, 5 + 1):
+        pddun[i] = tempp2[i - 1]
+
+    x = 1
+    for i in range(1, 5 + 1):
+        hua[pddun[i].flower] += 1
+        number[pddun[i].num] += 1
+
+    x = 1
+    for i in range(1, 4 + 1):
+        if hua[i] == 5:
+            if shunzi5(pddun[1].num) == 1:
+                k = (9.0 + 0.9 / 9 * (pddun[1].num - 1)) * 1.0
+                # score += k  # 14 13 12 11 10
+                return k  # 同花顺
+
+    x = 1
+    for i in range(5, 0, -1):
+        if number[pddun[i].num] == 1:
+            x = pddun[i].num
+        if number[pddun[i].num] == 4:
+            k = (8.0 + 0.9 / (130 + 13) * ((pddun[i].num - 1) * 10)) * 1.0
+            return k  # 炸弹
+
+    x = 1
+    for i in range(5, 0, -1):
+        if number[pddun[i].num] == 3:
+            x = pddun[i].num
+            for j in range(5, 0, -1):
+                if number[pddun[j].num] == 2:
+                    k = (7.0 + 0.9 / (130 + 13) * ((x - 1) * 10 + pddun[j].num - 1)) * 1.0
+                    return k  # 葫芦
+    x = 1
+    for i in range(1, 4 + 1):
+        if hua[i] == 5:
+            k = (6.0 + 0.9 / (130000 + 13000 + 1300 + 130 + 13) * (
+                    (pddun[5].num - 1) * 10000 + (pddun[4].num - 1) * 1000 + (pddun[3].num - 1) * 100 + (
+                    pddun[2].num - 1) * 10 + (pddun[1].num - 1))) * 1.0
+            return k  # 同花
+
+    x = 1
+    if shunzi5(pddun[1].num) == 1:
+        k = (5.0 + 0.9 / 9 * (pddun[1].num - 1) * 1.0)
+        return k  # 5张顺子
+
+    x = 1
+    for i in range(5, 0, -1):
+        if number[pddun[i].num] == 3:
+            x = pddun[i].num
+            for j in range(5, 0, -1):
+                if number[pddun[j].num] == 1:
+                    k = (4.0 + 0.9 / (1300 + 130 + 13) * ((x - 1) * 100))
+                    return k  # 三条
+
+    x = 1
+    for i in range(5, 0, -1):
+        if number[pddun[i].num] == 2:
+            for j in range(5, 0, -1):
+                if (pddun[i].num != pddun[j].num) and number[pddun[j].num] == 2 and abs(
+                        pddun[i].num - pddun[j].num) == 1:
+                    k = (3.0 + 0.9 / 10 * (pddun[j].num - 1 - 1)) * 1.0
+                    return k  # 连对2对
+
+    x = 1
+    for i in range(5, 0, -1):
+        if number[pddun[i].num] == 2:
+            for j in range(5, 0, -1):
+                if (pddun[i].num != pddun[j].num) and number[pddun[j].num] == 2:
+                    k = (2.0 + 0.9 / (130 + 13) * ((pddun[i].num - 1) * 10 + pddun[j].num - 1)) * 1.0
+                    return k  # 普通2对
+
+    x = 1
+    for i in range(5, 0, -1):
+        if number[pddun[i].num] == 1:
+            x = pddun[i].num
+        if number[pddun[i].num] == 2:
+            k = (1.0 + 0.9 / (130 + 13) * ((pddun[i].num - 1) * 10 + x - 1)) * 1.0
+            return k  # 单对+3张散
+
+    k = (0.9 / (130000 + 13000 + 1300 + 130 + 13) * ((pddun[5].num - 1) * 10000 + (pddun[4].num - 1) * 1000 + (pddun[3].num - 1) * 100 + (pddun[2].num - 1) * 10 + pddun[1].num - 1)) * 1.0
+    return k
+
 def dfs_1(d, index_1): #/ * 枚举组合 * /
     for i in range(d,13+1):
         s1[i] = 1
         temp_1[index_1] = poker_1[i]
-        if index_1 == r1 :
-            init_1()
-            dfs_2(1, 1)
+        if index_1 == 5 :
+            if pddi()>=2.0:
+                init_1()
+                dfs_2(1, 1)
         else:
             dfs_1(i + 1, index_1 + 1)
         s1[i] = 0
@@ -454,11 +531,12 @@ def history(limit,page):
     }
 
     response=requests.get(url,params=params,headers=headers)
+    message=response.json()
     print(response.text)
+    return response
 
 def history_detail():
     global id
-    id2=str(id)
     url = "https://api.shisanshui.rtxux.xyz/history/{id}"
     params = {"id": id}
     headers = {"X-Auth-Token": token}
@@ -467,7 +545,8 @@ def history_detail():
 
 
 def opengame():
-    global token,id
+    global token
+    global id
     url = "https://api.shisanshui.rtxux.xyz/game/open"
     headers = {"X-Auth-Token": token}
     response = requests.post(url, headers=headers)
@@ -482,7 +561,6 @@ def submitgame(submit_ans):
     url = "https://api.shisanshui.rtxux.xyz/game/submit"
     headers = {"content-type": "application/json"}
     headers["X-Auth-Token"] = token
-    data={}
     data={"id":id}
     data["card"]=submit_ans
     response=requests.post(url,data=json.dumps(data),headers=headers)
@@ -513,6 +591,7 @@ def login(usename,password):
     message = response.json()  # 登录
     token = message["data"]["token"]
     use=message["data"]["user_id"]
+    print (response.text)
     return message
 #139 dzy001 dzy001
 #143 dzy002 dzy002
@@ -529,6 +608,7 @@ def read_opengame():#读入
 
     str0 = opengame()#开始牌局
     # print(str0)
+
     str1 = str0.replace("10", "T")
     dex = 0
     for i in range(0, 39, 3):
@@ -547,9 +627,8 @@ def read_opengame():#读入
         dex += 1
         poker_1[dex] = x
 
-
 def printf_ans():#输出
-    submit_ans=[]
+    submit_ans.clear()
     s=""
     for i in range(1, 3 + 1):  # 前墩
         if i!=3:
@@ -577,6 +656,63 @@ def printf_ans():#输出
     print(s)
     return submit_ans
 
+def init_end():
+    print("end!")
+def init_start():
+    print("start!")
+    global end_ans,score
+    end_ans,score=0.0,0.0
+    poker_1.clear()
+    poker_2.clear()
+    poker_3.clear()
+    ans_1.clear()
+    ans_2.clear()
+    ans_3.clear()
+    temp_1.clear()
+    temp_2.clear()
+    temp_3.clear()
+    end_1.clear()
+    end_2.clear()
+    end_3.clear()
+    s1.clear()
+    s2.clear()
+    s3.clear()
+    tempp1.clear()
+    tempp2.clear()
+    tempp3.clear()
+    submit_ans.clear()
+    pddun.clear()
+    for i in range(0, 20):
+        poker_1.append(node(0, 0))
+        poker_2.append(node(0, 0))
+        poker_3.append(node(0, 0))
+        ans_1.append(node(0, 0))
+        ans_2.append(node(0, 0))
+        ans_3.append(node(0, 0))
+        temp_1.append(node(0, 0))
+        temp_2.append(node(0, 0))
+        temp_3.append(node(0, 0))
+        end_1.append(node(0, 0))
+        end_2.append(node(0, 0))
+        end_3.append(node(0, 0))
+        s1.append(0)
+        s2.append(0)
+        s3.append(0)
+        submit_ans.append("")
+        pddun.append(node(0,0))
+
+    for i in range(0, 2 + 1):
+        tempp1.append(node(0, 0))
+        submit_ans.append("")
+    for i in range(0, 4 + 1):
+        tempp2.append(node(0, 0))
+    for i in range(0, 4 + 1):
+        tempp3.append(node(0, 0))
+
+    for i in range(0, 15 + 1):
+        hua[i] = 0
+        number[i] = 0  # 桶排初始化
+
 
 #主函数
 
@@ -597,7 +733,7 @@ def printf_ans():#输出
 # history(3,1)#历史记录
 # history_detail()#记录详情
 # logout()  # 注销
-# #print("权值:",end_ans)
+#print("权值:",end_ans)
 
 
 
